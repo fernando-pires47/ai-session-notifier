@@ -198,14 +198,14 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
 
       const projectName = project?.id || directory?.split("/").filter(Boolean).pop() || "unknown-project"
       const cwd = directory || process.cwd()
-      const label = eventType === "session.error" ? "erro" : "concluida"
+      const label = eventType === "session.error" ? "error" : "completed"
       const text = [
-        "OpenCode: sessao finalizada",
-        `Projeto: ${projectName}`,
+        "OpenCode: session finished",
+        `Project: ${projectName}`,
         `Status: ${label}`,
-        `Sessao: ${sessionId}`,
-        `Duracao: ${durationSeconds}s`,
-        `Diretorio: ${cwd}`,
+        `Session: ${sessionId}`,
+        `Duration: ${durationSeconds}s`,
+        `Directory: ${cwd}`,
       ].join("\n")
 
       try {
@@ -218,8 +218,8 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
             sessionId,
             message:
               result.reason === "http-error"
-                ? "Falha HTTP ao enviar notificacao Telegram."
-                : "Variaveis de ambiente do Telegram ausentes.",
+                ? "HTTP failure while sending Telegram notification."
+                : "Missing Telegram environment variables.",
             status: result.status,
             body: result.body,
             details: result.details,
@@ -261,7 +261,7 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
           scope: "event-send",
            eventType,
           sessionId,
-          message: "Erro inesperado ao enviar notificacao Telegram.",
+          message: "Unexpected error while sending Telegram notification.",
           error: String(error),
         }
 

@@ -3,27 +3,27 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Uso:
+Usage:
   ./toggle-notify.sh --i <ia> [--project] status
   ./toggle-notify.sh --i <ia> [--project] all on|off
   ./toggle-notify.sh --i <ia> [--project] idle on|off
   ./toggle-notify.sh --i <ia> [--project] error on|off
   ./toggle-notify.sh --i <ia> [--project] debug on|off
-  ./toggle-notify.sh --i <ia> [--project] min <segundos|off>
+  ./toggle-notify.sh --i <ia> [--project] min <seconds|off>
   ./toggle-notify.sh --i <ia> [--project] test
   ./toggle-notify.sh --i <ia> [--project] last-error
 
-Opcoes:
-  --i <ia>     IA/CLI alvo (obrigatorio)
-  --project    Usa plugin do projeto atual (padrao: global)
-  --help       Mostra esta ajuda
+Options:
+  --i <ia>     Target AI/CLI (required)
+  --project    Use plugin from current project (default: global)
+  --help       Show this help
 
-Notas:
+Notes:
   - all on   => enabled=true, idle=true, error=true
   - all off  => enabled=false, idle=false, error=false
-  - idle/error on forcam enabled=true
+  - idle/error on force enabled=true
   - min off  => minSessionSeconds=0
-  - debug on => mostra/guarda erro detalhado
+  - debug on => shows/saves detailed error
 EOF
 }
 
@@ -34,7 +34,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --i)
       if [[ $# -lt 2 ]]; then
-        echo "Erro: --i requer um valor."
+        echo "Error: --i requires a value."
         usage
         exit 1
       fi
@@ -56,7 +56,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$IA" ]]; then
-  echo "Erro: --i e obrigatorio."
+  echo "Error: --i is required."
   usage
   exit 1
 fi
@@ -70,8 +70,8 @@ case "$IA" in
     fi
     ;;
   *)
-    echo "Erro: IA nao suportada: $IA"
-    echo "Atualmente suportadas: opencode"
+    echo "Error: unsupported AI: $IA"
+    echo "Currently supported: opencode"
     exit 1
     ;;
 esac
@@ -123,7 +123,7 @@ import sys
 state_file = sys.argv[1]
 
 if not os.path.exists(state_file):
-    print("Nenhum erro registrado ainda.")
+    print("No error recorded yet.")
     raise SystemExit(0)
 
 with open(state_file, "r", encoding="utf-8") as f:
@@ -131,7 +131,7 @@ with open(state_file, "r", encoding="utf-8") as f:
 
 last_error = loaded.get("lastError")
 if not isinstance(last_error, dict):
-    print("Nenhum erro registrado ainda.")
+    print("No error recorded yet.")
     raise SystemExit(0)
 
 print(json.dumps(last_error, indent=2, ensure_ascii=False))
@@ -183,17 +183,17 @@ if not token or not chat_id:
     payload = {
         "at": now,
         "scope": "manual-test",
-        "message": "Variáveis OPENCODE_TG_BOT_TOKEN/OPENCODE_TG_CHAT_ID ausentes.",
+        "message": "Missing OPENCODE_TG_BOT_TOKEN/OPENCODE_TG_CHAT_ID environment variables.",
     }
     save_last_error(payload)
-    print("FALHA: variáveis de ambiente ausentes.")
+    print("FAILURE: missing environment variables.")
     print(json.dumps(payload, indent=2, ensure_ascii=False))
     raise SystemExit(1)
 
 url = f"https://api.telegram.org/bot{token}/sendMessage"
 body = {
     "chat_id": chat_id,
-    "text": "OpenCode: mensagem de teste /notify test",
+    "text": "OpenCode: test message /notify test",
     "disable_web_page_preview": True,
 }
 raw = json.dumps(body).encode("utf-8")
@@ -202,7 +202,7 @@ req = urllib.request.Request(url, data=raw, method="POST", headers={"Content-Typ
 try:
     with urllib.request.urlopen(req, timeout=20) as response:
         response_text = response.read().decode("utf-8", errors="replace")
-        print(f"OK: mensagem de teste enviada (HTTP {response.status}).")
+        print(f"OK: test message sent (HTTP {response.status}).")
         print(response_text)
 except urllib.error.HTTPError as err:
     response_text = err.read().decode("utf-8", errors="replace")
@@ -210,22 +210,22 @@ except urllib.error.HTTPError as err:
         "at": now,
         "scope": "manual-test",
         "status": err.code,
-        "message": "Falha HTTP ao enviar teste para Telegram.",
+        "message": "HTTP failure while sending test to Telegram.",
         "body": response_text,
     }
     save_last_error(payload)
-    print(f"FALHA: HTTP {err.code}.")
+    print(f"FAILURE: HTTP {err.code}.")
     print(response_text)
     raise SystemExit(1)
 except Exception as err:
     payload = {
         "at": now,
         "scope": "manual-test",
-        "message": "Erro inesperado ao enviar teste para Telegram.",
+        "message": "Unexpected error while sending test to Telegram.",
         "error": str(err),
     }
     save_last_error(payload)
-    print("FALHA: erro inesperado.")
+    print("FAILURE: unexpected error.")
     print(json.dumps(payload, indent=2, ensure_ascii=False))
     raise SystemExit(1)
 PY
@@ -236,13 +236,13 @@ TARGET="${1:-}"
 MODE="${2:-}"
 
 if [[ -z "$TARGET" || -z "$MODE" ]]; then
-  echo "Erro: parametros insuficientes."
+  echo "Error: insufficient parameters."
   usage
   exit 1
 fi
 
 if [[ "$TARGET" != "all" && "$TARGET" != "idle" && "$TARGET" != "error" && "$TARGET" != "debug" && "$TARGET" != "min" ]]; then
-  echo "Erro: alvo invalido: $TARGET"
+  echo "Error: invalid target: $TARGET"
   usage
   exit 1
 fi
@@ -252,13 +252,13 @@ if [[ "$TARGET" == "min" ]]; then
     MODE="0"
   fi
   if [[ ! "$MODE" =~ ^[0-9]+$ ]]; then
-    echo "Erro: min aceita apenas numero inteiro >= 0 ou 'off'."
+    echo "Error: min only accepts integer >= 0 or 'off'."
     usage
     exit 1
   fi
 else
   if [[ "$MODE" != "on" && "$MODE" != "off" ]]; then
-    echo "Erro: modo invalido: $MODE"
+    echo "Error: invalid mode: $MODE"
     usage
     exit 1
   fi
@@ -316,4 +316,4 @@ print(json.dumps(state, indent=2))
 PY
 
 echo
-echo "State atualizado em: $STATE_FILE"
+echo "State updated at: $STATE_FILE"

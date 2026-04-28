@@ -1,74 +1,94 @@
-# Telegram Notify Plugin para OpenCode
+# Telegram Notify Plugin for OpenCode
 
-Plugin local para enviar notificacoes no Telegram quando a sessao do OpenCode termina (`session.idle`).
+Local plugin to send Telegram notifications when an OpenCode session ends (`session.idle`).
 
-## O que ele faz
+## What it does
 
-- Envia mensagem quando a sessao fica idle (fim da execucao).
-- Permite configurar notificacao de erro (`session.error`) durante a sessao.
-- Permite definir duracao minima de sessao para evitar notificacoes curtas.
-- Evita notificacoes duplicadas em janela curta.
-- Permite testar envio imediatamente com `/notify test`.
-- Permite salvar/consultar ultimo erro de envio com `/notify last-error`.
-- Nao depende de bibliotecas externas.
+- Sends a message when the session becomes idle (end of execution).
+- Lets you configure error notifications (`session.error`) during the session.
+- Lets you define a minimum session duration to avoid short notifications.
+- Avoids duplicate notifications within a short window.
+- Lets you test delivery immediately with `/notify test`.
+- Lets you save/check the latest send error with `/notify last-error`.
+- Does not depend on external libraries.
 
-## Arquivos
+## Files
 
-- `telegram-notify.plugin.js`: logica do plugin.
-- `install.sh`: instalador com suporte a escopo global e de projeto.
-- `toggle-notify.sh`: altera notificacoes em tempo de execucao.
-- `notify.md` (instalado automaticamente): comando `/notify` no OpenCode.
+- `telegram-notify.plugin.js`: plugin logic.
+- `install.sh`: installer with global and project scope support.
+- `toggle-notify.sh`: toggles notifications at runtime.
+- `notify.md` (installed automatically): `/notify` command in OpenCode.
 
-## Pre-requisitos
+## Prerequisites
 
-- OpenCode instalado.
-- Um bot do Telegram criado via BotFather.
-- `chat_id` do destino para receber mensagens.
+- OpenCode installed.
+- A Telegram bot created with BotFather.
+- Destination `chat_id` to receive messages.
 
-## 1) Criar bot e obter token
+## 1) Create bot and get token
 
-1. No Telegram, abra o `@BotFather`.
-2. Rode `/newbot` e finalize a criacao.
-3. Copie o token (formato parecido com `123456:ABC...`).
+1. In Telegram, open `@BotFather`.
+2. Run `/newbot` and finish setup.
+3. Copy the token (format similar to `123456:ABC...`).
 
-## 2) Obter o chat_id
+## 2) Get the chat_id
 
-Opcao simples:
+Simple option:
 
-1. Envie uma mensagem para o bot (ou adicione o bot ao grupo/canal correto).
-2. Acesse:
+1. Send a message to the bot (or add the bot to the correct group/channel).
+2. Open:
 
 ```text
-https://api.telegram.org/bot<SEU_TOKEN>/getUpdates
+https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates
 ```
 
-3. Procure por `"chat":{"id": ...}` e use esse valor em `OPENCODE_TG_CHAT_ID`.
+3. Find `"chat":{"id": ...}` and use this value in `OPENCODE_TG_CHAT_ID`.
 
-## 3) Instalar o plugin
+## 3) Install the plugin
 
-### Global (padrao)
+### Quick install (one command)
+
+Global (default):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/fernando-pires47/ai-session-notifier/main/quick-install.sh | bash -s -- --i opencode
+```
+
+Current project:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/fernando-pires47/ai-session-notifier/main/quick-install.sh | bash -s -- --i opencode --project
+```
+
+Pin a specific version/tag:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/fernando-pires47/ai-session-notifier/main/quick-install.sh | bash -s -- --i opencode -v 1.0.0
+```
+
+### Global (default)
 
 ```bash
 ./install.sh --i opencode
 ```
 
-Instala em `~/.config/opencode/plugins/telegram-notify.plugin.js`.
+Installs to `~/.config/opencode/plugins/telegram-notify.plugin.js`.
 
-### Projeto atual
+### Current project
 
 ```bash
 ./install.sh --i opencode --project
 ```
 
-Instala em `.opencode/plugins/telegram-notify.plugin.js`.
+Installs to `.opencode/plugins/telegram-notify.plugin.js`.
 
-O instalador grava no mesmo diretorio do plugin:
+The installer writes to the same plugin directory:
 
-- `telegram-notify.state.json`: estado ativo para toggle em runtime
+- `telegram-notify.state.json`: active state used for runtime toggles
 
-Reinstalacao nao apaga seu estado personalizado: o instalador preserva valores ja existentes e apenas completa chaves faltantes com defaults.
+Reinstall does not erase your custom state: the installer preserves existing values and only fills missing keys with defaults.
 
-Valor default apos instalar:
+Default values after install:
 
 - `enabled: true`
 - `idle: true`
@@ -76,66 +96,66 @@ Valor default apos instalar:
 - `debugError: false`
 - `minSessionSeconds: 60`
 
-Tambem instala o comando customizado:
+It also installs the custom command:
 
 - Global: `~/.config/opencode/commands/notify.md`
-- Projeto: `.opencode/commands/notify.md`
+- Project: `.opencode/commands/notify.md`
 
-## 4) Configurar variaveis de ambiente
+## 4) Configure environment variables
 
 ```bash
-export OPENCODE_TG_BOT_TOKEN='<seu_bot_token>'
-export OPENCODE_TG_CHAT_ID='<seu_chat_id>'
+export OPENCODE_TG_BOT_TOKEN='<your_bot_token>'
+export OPENCODE_TG_CHAT_ID='<your_chat_id>'
 ```
 
-Controle de notificacao de erro e feito via state (`/notify error on|off`).
+Error notification control is done via state (`/notify error on|off`).
 
-## 5) Ativar/desativar durante a sessao
+## 5) Enable/disable during the session
 
-Primeiro, torne o script executavel:
+First, make the script executable:
 
 ```bash
 chmod +x ./toggle-notify.sh
 ```
 
-Ver estado atual:
+Show current state:
 
 ```bash
 ./toggle-notify.sh --i opencode status
 ```
 
-Escopo do projeto atual:
+Current project scope:
 
 ```bash
 ./toggle-notify.sh --i opencode --project status
 ```
 
-Ligar/desligar tudo:
+Enable/disable everything:
 
 ```bash
 ./toggle-notify.sh --i opencode all on
 ./toggle-notify.sh --i opencode all off
 ```
 
-Ligar/desligar so idle:
+Enable/disable idle only:
 
 ```bash
 ./toggle-notify.sh --i opencode idle on
 ./toggle-notify.sh --i opencode idle off
 ```
 
-Ligar/desligar so error:
+Enable/disable error only:
 
 ```bash
 ./toggle-notify.sh --i opencode error on
 ./toggle-notify.sh --i opencode error off
 ```
 
-O plugin le `telegram-notify.state.json` a cada evento, entao a mudanca vale na sessao atual sem reiniciar o OpenCode.
+The plugin reads `telegram-notify.state.json` on every event, so changes apply to the current session without restarting OpenCode.
 
-## 6) Usar via comando `/notify` no OpenCode
+## 6) Use with `/notify` command in OpenCode
 
-Depois da instalacao, voce pode controlar direto no chat do OpenCode:
+After installation, you can control everything directly in OpenCode chat:
 
 ```text
 /notify
@@ -154,62 +174,62 @@ Depois da instalacao, voce pode controlar direto no chat do OpenCode:
 /notify last-error
 ```
 
-Atalhos:
+Shortcuts:
 
-- `/notify on` equivale a `all on`
-- `/notify off` equivale a `all off`
-- `/notify min off` desativa filtro de duracao minima (equivale a `0`)
-- `/notify test` envia uma notificacao de teste na hora
-- `/notify debug on` habilita log detalhado de falhas e salva `lastError`
-- `/notify last-error` mostra o ultimo erro salvo no state
+- `/notify on` is equivalent to `all on`
+- `/notify off` is equivalent to `all off`
+- `/notify min off` disables minimum duration filtering (equivalent to `0`)
+- `/notify test` sends a test notification immediately
+- `/notify debug on` enables detailed failure logs and saves `lastError`
+- `/notify last-error` shows the latest error saved in state
 
-Depois disso, abra o OpenCode no mesmo shell (ou garanta que as envs estejam carregadas no ambiente).
+After that, open OpenCode in the same shell (or ensure env vars are loaded in the process environment).
 
-## Exemplo de mensagem
+## Example message
 
 ```text
-OpenCode: sessao finalizada
-Projeto: meu-projeto
-Status: concluida
-Sessao: abc123
-Duracao: 135s
-Diretorio: /caminho/do/projeto
+OpenCode: session finished
+Project: my-project
+Status: completed
+Session: abc123
+Duration: 135s
+Directory: /path/to/project
 ```
 
 ## Troubleshooting
 
-- Sem notificacao:
-  - verifique `OPENCODE_TG_BOT_TOKEN` e `OPENCODE_TG_CHAT_ID`.
-  - confirme se o bot recebeu ao menos uma mensagem no chat alvo.
-- Token correto, mas erro de envio:
-  - confira se o chat_id e do chat certo (privado/grupo/canal).
-- Plugin nao carregou:
-  - confirme o caminho de instalacao e reinicie o OpenCode.
+- No notification:
+  - check `OPENCODE_TG_BOT_TOKEN` and `OPENCODE_TG_CHAT_ID`.
+  - make sure the bot has received at least one message in the target chat.
+- Correct token, but send error:
+  - check if `chat_id` belongs to the correct chat (private/group/channel).
+- Plugin did not load:
+  - verify install path and restart OpenCode.
 
-## Uso do instalador
+## Installer usage
 
 ```bash
 ./install.sh --help
 ```
 
-Parametros:
+Parameters:
 
-- `--i <ia>`: obrigatorio. Atualmente suporta apenas `opencode`.
-- `--project`: instala no projeto atual.
-- sem `--project`: instalacao global.
+- `--i <ia>`: required. Currently supports only `opencode`.
+- `--project`: installs in current project.
+- without `--project`: global install.
 
-## Uso do toggle
+## Toggle usage
 
 ```bash
 ./toggle-notify.sh --help
 ```
 
-Parametros:
+Parameters:
 
-- `--i <ia>`: obrigatorio. Atualmente suporta apenas `opencode`.
-- `--project`: usa plugin do projeto atual.
-- `status`: mostra estado atual.
-- `all on|off`: liga/desliga todas notificacoes.
-- `idle on|off`: liga/desliga notificacao de sessao idle.
-- `error on|off`: liga/desliga notificacao de erro.
-- `min <segundos|off>`: define duracao minima da sessao para notificar.
+- `--i <ia>`: required. Currently supports only `opencode`.
+- `--project`: uses plugin from current project.
+- `status`: shows current state.
+- `all on|off`: enables/disables all notifications.
+- `idle on|off`: enables/disables idle session notification.
+- `error on|off`: enables/disables error notification.
+- `min <seconds|off>`: sets minimum session duration for notifications.

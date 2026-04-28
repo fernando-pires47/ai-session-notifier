@@ -1,14 +1,14 @@
 ---
-description: Controla notificacoes Telegram (status/on/off/min)
+description: Controls Telegram notifications (status/on/off/min)
 ---
-Execute o comando abaixo e responda com o resultado de forma objetiva.
+Run the command below and reply with the result objectively.
 
-!`"/home/fernando/Documents/fonts/fernando/ai-notification/.opencode/plugins/toggle-notify.sh" --i opencode --project $ARGUMENTS`
+!`"/home/fernando/Documents/fonts/fernando/ai-session-notifier/.opencode/plugins/toggle-notify.sh" --i opencode --project $ARGUMENTS`
 
-Regras:
-- Se sem argumentos, mostrar status.
-- Atalhos: `on` = `all on`; `off` = `all off`.
-- Duracao minima: `min <segundos>` ou `min off`.
-- Teste de envio: `test`.
-- Debug de erro: `debug on` ou `debug off`.
-- Ultimo erro: `last-error`.
+Rules:
+- If no arguments are provided, show status.
+- Shortcuts: `on` = `all on`; `off` = `all off`.
+- Minimum duration: `min <seconds>` or `min off`.
+- Send test: `test`.
+- Error debug: `debug on` or `debug off`.
+- Last error: `last-error`.

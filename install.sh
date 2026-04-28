@@ -3,15 +3,15 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Uso:
+Usage:
   ./install.sh --i <ia> [--project]
 
-Opcoes:
-  --i <ia>     IA/CLI alvo da instalacao (obrigatorio)
-  --project    Instala no projeto atual (padrao: global)
-  --help       Mostra esta ajuda
+Options:
+  --i <ia>     Target AI/CLI for installation (required)
+  --project    Install in current project (default: global)
+  --help       Show this help
 
-Exemplos:
+Examples:
   ./install.sh --i opencode
   ./install.sh --i opencode --project
 EOF
@@ -24,7 +24,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --i)
       if [[ $# -lt 2 ]]; then
-        echo "Erro: --i requer um valor."
+        echo "Error: --i requires a value."
         usage
         exit 1
       fi
@@ -40,7 +40,7 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     *)
-      echo "Erro: argumento invalido: $1"
+      echo "Error: invalid argument: $1"
       usage
       exit 1
       ;;
@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$IA" ]]; then
-  echo "Erro: --i e obrigatorio."
+  echo "Error: --i is required."
   usage
   exit 1
 fi
@@ -58,12 +58,12 @@ PLUGIN_SOURCE="$SCRIPT_DIR/telegram-notify.plugin.js"
 TOGGLE_SOURCE="$SCRIPT_DIR/toggle-notify.sh"
 
 if [[ ! -f "$PLUGIN_SOURCE" ]]; then
-  echo "Erro: plugin nao encontrado em $PLUGIN_SOURCE"
+  echo "Error: plugin not found at $PLUGIN_SOURCE"
   exit 1
 fi
 
 if [[ ! -f "$TOGGLE_SOURCE" ]]; then
-  echo "Erro: script de toggle nao encontrado em $TOGGLE_SOURCE"
+  echo "Error: toggle script not found at $TOGGLE_SOURCE"
   exit 1
 fi
 
@@ -76,8 +76,8 @@ case "$IA" in
     fi
     ;;
   *)
-    echo "Erro: IA nao suportada: $IA"
-    echo "Atualmente suportadas: opencode"
+    echo "Error: unsupported AI: $IA"
+    echo "Currently supported: opencode"
     exit 1
     ;;
 esac
@@ -123,14 +123,14 @@ PY
 
 rm -f "$TARGET_DIR/telegram-notify.config.json"
 
-echo "Plugin instalado com sucesso."
+echo "Plugin installed successfully."
 echo "IA: $IA"
-echo "Escopo: $SCOPE"
-echo "Destino: $TARGET_DIR/telegram-notify.plugin.js"
-echo "Arquivo state: $STATE_FILE"
-echo "Notificacao de erro (default): false"
-echo "Debug de erro (default): false"
-echo "Duracao minima (default): 60s"
+echo "Scope: $SCOPE"
+echo "Destination: $TARGET_DIR/telegram-notify.plugin.js"
+echo "State file: $STATE_FILE"
+echo "Error notification (default): false"
+echo "Error debug (default): false"
+echo "Minimum duration (default): 60s"
 
 if [[ "$SCOPE" == "project" ]]; then
   COMMAND_TARGET_DIR="$(pwd)/.opencode/commands"
@@ -145,25 +145,25 @@ fi
 mkdir -p "$COMMAND_TARGET_DIR"
 cat > "$COMMAND_TARGET_DIR/notify.md" <<EOF
 ---
-description: Controla notificacoes Telegram (status/on/off/min)
+description: Controls Telegram notifications (status/on/off/min)
 ---
-Execute o comando abaixo e responda com o resultado de forma objetiva.
+Run the command below and reply with the result objectively.
 
 !\`"$TOGGLE_COMMAND" --i opencode $COMMAND_ARGS \$ARGUMENTS\`
 
-Regras:
-- Se sem argumentos, mostrar status.
-- Atalhos: \`on\` = \`all on\`; \`off\` = \`all off\`.
-- Duracao minima: \`min <segundos>\` ou \`min off\`.
-- Teste de envio: \`test\`.
-- Debug de erro: \`debug on\` ou \`debug off\`.
-- Ultimo erro: \`last-error\`.
+Rules:
+- If no arguments are provided, show status.
+- Shortcuts: \`on\` = \`all on\`; \`off\` = \`all off\`.
+- Minimum duration: \`min <seconds>\` or \`min off\`.
+- Send test: \`test\`.
+- Error debug: \`debug on\` or \`debug off\`.
+- Last error: \`last-error\`.
 EOF
 
 echo
-echo "Configure as variaveis de ambiente antes de abrir o OpenCode:"
-echo "  export OPENCODE_TG_BOT_TOKEN='<seu_bot_token>'"
-echo "  export OPENCODE_TG_CHAT_ID='<seu_chat_id>'"
+echo "Set environment variables before opening OpenCode:"
+echo "  export OPENCODE_TG_BOT_TOKEN='<your_bot_token>'"
+echo "  export OPENCODE_TG_CHAT_ID='<your_chat_id>'"
 echo
-echo "Comando customizado instalado: $COMMAND_TARGET_DIR/notify.md"
-echo "Uso no OpenCode: /notify test | /notify debug on | /notify last-error"
+echo "Custom command installed: $COMMAND_TARGET_DIR/notify.md"
+echo "Usage in OpenCode: /notify test | /notify debug on | /notify last-error"
