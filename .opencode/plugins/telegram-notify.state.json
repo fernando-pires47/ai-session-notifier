@@ -1,0 +1,7 @@
+{
+  "enabled": false,
+  "idle": true,
+  "error": false,
+  "debugError": false,
+  "minSessionSeconds": 0
+}
