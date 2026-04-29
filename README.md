@@ -1,6 +1,5 @@
 # Telegram Notify Plugin for OpenCode
 
-[![Tag Release](https://github.com/fernando-pires47/ai-session-notifier/actions/workflows/tag.yml/badge.svg)](https://github.com/fernando-pires47/ai-session-notifier/actions/workflows/tag.yml)
 [![Release](https://github.com/fernando-pires47/ai-session-notifier/actions/workflows/release.yml/badge.svg)](https://github.com/fernando-pires47/ai-session-notifier/actions/workflows/release.yml)
 
 Local plugin to send Telegram notifications when an OpenCode session ends (`session.idle`).
