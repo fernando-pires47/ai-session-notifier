@@ -1,5 +1,8 @@
 # Telegram Notify Plugin for OpenCode
 
+[![Tag Release](https://github.com/fernando-pires47/ai-session-notifier/actions/workflows/tag.yml/badge.svg)](https://github.com/fernando-pires47/ai-session-notifier/actions/workflows/tag.yml)
+[![Release](https://github.com/fernando-pires47/ai-session-notifier/actions/workflows/release.yml/badge.svg)](https://github.com/fernando-pires47/ai-session-notifier/actions/workflows/release.yml)
+
 Local plugin to send Telegram notifications when an OpenCode session ends (`session.idle`).
 
 ## What it does
@@ -233,3 +236,17 @@ Parameters:
 - `idle on|off`: enables/disables idle session notification.
 - `error on|off`: enables/disables error notification.
 - `min <seconds|off>`: sets minimum session duration for notifications.
+
+## Release workflow (maintainers)
+
+This repository uses GitHub Actions to generate tags and publish releases.
+
+1. Open **Actions** in GitHub.
+2. Run workflow **Tag Release**.
+3. Provide `version` as `1.0.0` or `v1.0.0`.
+
+The workflow creates and pushes tag `vX.Y.Z`. After that, workflow **Release** runs automatically on tag push and publishes:
+
+- `ai-session-notifier-vX.Y.Z.tar.gz`
+- `ai-session-notifier-vX.Y.Z.zip`
+- `checksums.txt`
