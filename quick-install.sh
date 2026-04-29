@@ -57,7 +57,13 @@ if [[ "$REF" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   REF="v$REF"
 fi
 
-ARCHIVE_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/archive/refs/${REF}.tar.gz"
+if [[ "$REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][A-Za-z0-9]+)*$ ]]; then
+  REF_TYPE="tags"
+else
+  REF_TYPE="heads"
+fi
+
+ARCHIVE_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/archive/refs/${REF_TYPE}/${REF}.tar.gz"
 
 TMP_DIR="$(mktemp -d)"
 cleanup() {
@@ -69,12 +75,13 @@ ARCHIVE_PATH="$TMP_DIR/${REPO_NAME}.tar.gz"
 
 echo "Downloading ${REPO_NAME} (${REF})..."
 if ! curl -fsSL "$ARCHIVE_URL" -o "$ARCHIVE_PATH"; then
-  if [[ "$REF" != "main" ]]; then
-    ALT_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/archive/${REF}.tar.gz"
-    echo "Primary URL failed. Trying fallback format..."
-    curl -fsSL "$ALT_URL" -o "$ARCHIVE_PATH"
-  else
-    echo "Error: failed to download installer archive from $ARCHIVE_URL"
+  ALT_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/archive/${REF}.tar.gz"
+  echo "Primary URL failed. Trying fallback format..."
+  if ! curl -fsSL "$ALT_URL" -o "$ARCHIVE_PATH"; then
+    echo "Error: failed to download installer archive"
+    echo "Tried:"
+    echo "  - $ARCHIVE_URL"
+    echo "  - $ALT_URL"
     exit 1
   fi
 fi
