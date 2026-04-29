@@ -47,6 +47,11 @@ jobs:
             exit 1
           fi
 
+      - name: Set git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Create and push tag
         run: |
           TAG="${{ steps.version.outputs.tag }}"
