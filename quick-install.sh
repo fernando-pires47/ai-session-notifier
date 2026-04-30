@@ -1,12 +1,57 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+detect_os() {
+  local uname_out
+  uname_out="$(uname -s 2>/dev/null || true)"
+  case "$uname_out" in
+    Linux)
+      echo "linux"
+      ;;
+    Darwin)
+      echo "macos"
+      ;;
+    MINGW*|MSYS*|CYGWIN*)
+      echo "windows"
+      ;;
+    *)
+      echo "unknown"
+      ;;
+  esac
+}
+
+ensure_supported_os() {
+  local os
+  os="$(detect_os)"
+
+  case "$os" in
+    linux|macos)
+      return 0
+      ;;
+    windows)
+      echo "Error: unsupported OS environment (Windows detected)."
+      echo "Quick installer requires a Unix-like shell and tools."
+      echo "Use WSL on Windows, then run the installer again."
+      exit 1
+      ;;
+    *)
+      echo "Error: unsupported OS environment."
+      echo "Supported systems: Linux and macOS."
+      exit 1
+      ;;
+  esac
+}
+
 usage() {
   cat <<'EOF'
 Quick installer for ai-session-notifier
 
 Usage:
   curl -fsSL https://raw.githubusercontent.com/fernando-pires47/ai-session-notifier/main/quick-install.sh | bash -s -- --i opencode [--project] [-v 1.0.0]
+
+Supported OS:
+  Linux and macOS
+  Windows: use WSL
 
 Options:
   -v, --v <version>     Version/tag to install (example: 1.0.0 or v1.0.0)
@@ -22,6 +67,8 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   usage
   exit 0
 fi
+
+ensure_supported_os
 
 for bin in curl tar bash; do
   if ! command -v "$bin" >/dev/null 2>&1; then

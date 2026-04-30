@@ -48,6 +48,16 @@ https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates
 
 ## 3) Install the plugin
 
+Supported OS for installers:
+
+- Linux and macOS
+- Windows: use WSL
+
+Supported target platform:
+
+- `opencode` only
+- Any other `--i` value is unsupported and will fail with a clear error
+
 ### Quick install (one command)
 
 Global (default):
@@ -216,7 +226,7 @@ Directory: /path/to/project
 
 Parameters:
 
-- `--i <ia>`: required. Currently supports only `opencode`.
+- `--i <ia>`: required. Supported platform(s): `opencode` only.
 - `--project`: installs in current project.
 - without `--project`: global install.
 

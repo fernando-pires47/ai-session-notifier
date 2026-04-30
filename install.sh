@@ -1,13 +1,59 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+detect_os() {
+  local uname_out
+  uname_out="$(uname -s 2>/dev/null || true)"
+  case "$uname_out" in
+    Linux)
+      echo "linux"
+      ;;
+    Darwin)
+      echo "macos"
+      ;;
+    MINGW*|MSYS*|CYGWIN*)
+      echo "windows"
+      ;;
+    *)
+      echo "unknown"
+      ;;
+  esac
+}
+
+ensure_supported_os() {
+  local os
+  os="$(detect_os)"
+
+  case "$os" in
+    linux|macos)
+      return 0
+      ;;
+    windows)
+      echo "Error: unsupported OS environment (Windows detected)."
+      echo "This installer requires a Unix-like shell and tools."
+      echo "Use WSL on Windows, then run the installer again."
+      exit 1
+      ;;
+    *)
+      echo "Error: unsupported OS environment."
+      echo "Supported systems: Linux and macOS."
+      exit 1
+      ;;
+  esac
+}
+
 usage() {
   cat <<'EOF'
 Usage:
   ./install.sh --i <ia> [--project]
 
+Supported OS:
+  Linux and macOS
+  Windows: use WSL
+
 Options:
   --i <ia>     Target AI/CLI for installation (required)
+               Supported platform(s): opencode only
   --project    Install in current project (default: global)
   --help       Show this help
 
@@ -19,6 +65,8 @@ EOF
 
 IA=""
 SCOPE="global"
+
+ensure_supported_os
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -76,8 +124,9 @@ case "$IA" in
     fi
     ;;
   *)
-    echo "Error: unsupported AI: $IA"
-    echo "Currently supported: opencode"
+    echo "Error: unsupported platform '$IA'."
+    echo "Supported platform(s): opencode"
+    echo "Example: ./install.sh --i opencode"
     exit 1
     ;;
 esac

@@ -12,6 +12,7 @@ Usage:
   ./toggle-notify.sh --i <ia> [--project] min <seconds|off>
   ./toggle-notify.sh --i <ia> [--project] test
   ./toggle-notify.sh --i <ia> [--project] last-error
+  ./toggle-notify.sh --i <ia> [--project] uninstall local|global|all
 
 Options:
   --i <ia>     Target AI/CLI (required)
@@ -24,6 +25,9 @@ Notes:
   - idle/error on force enabled=true
   - min off  => minSessionSeconds=0
   - debug on => shows/saves detailed error
+  - uninstall local removes project plugin/state + .opencode/commands/notify.md
+  - uninstall global removes ~/.config/opencode plugin/state files
+  - uninstall all removes both local and global files
 EOF
 }
 
@@ -83,6 +87,58 @@ ACTION="${1:-status}"
 if [[ "$ACTION" == "on" || "$ACTION" == "off" ]]; then
   set -- all "$ACTION"
   ACTION="all"
+fi
+
+if [[ "$ACTION" == "uninstall" ]]; then
+  UNINSTALL_SCOPE="${2:-}"
+
+  if [[ "$UNINSTALL_SCOPE" != "local" && "$UNINSTALL_SCOPE" != "global" && "$UNINSTALL_SCOPE" != "all" ]]; then
+    echo "Error: uninstall target must be local, global, or all."
+    usage
+    exit 1
+  fi
+
+  remove_file() {
+    local path="$1"
+    if [[ -f "$path" ]]; then
+      rm "$path"
+      echo "removed: $path"
+    else
+      echo "not found: $path"
+    fi
+  }
+
+  uninstall_local() {
+    local local_plugins_dir
+    local local_commands_dir
+    local_plugins_dir="$(pwd)/.opencode/plugins"
+    local_commands_dir="$(pwd)/.opencode/commands"
+
+    remove_file "$local_plugins_dir/telegram-notify.plugin.js"
+    remove_file "$local_plugins_dir/telegram-notify.state.json"
+    remove_file "$local_plugins_dir/toggle-notify.sh"
+    remove_file "$local_commands_dir/notify.md"
+  }
+
+  uninstall_global() {
+    local global_plugins_dir
+    global_plugins_dir="$HOME/.config/opencode/plugins"
+
+    remove_file "$global_plugins_dir/telegram-notify.plugin.js"
+    remove_file "$global_plugins_dir/telegram-notify.state.json"
+    remove_file "$global_plugins_dir/toggle-notify.sh"
+  }
+
+  if [[ "$UNINSTALL_SCOPE" == "local" ]]; then
+    uninstall_local
+  elif [[ "$UNINSTALL_SCOPE" == "global" ]]; then
+    uninstall_global
+  else
+    uninstall_local
+    uninstall_global
+  fi
+
+  exit 0
 fi
 
 if [[ "$ACTION" == "status" ]]; then
