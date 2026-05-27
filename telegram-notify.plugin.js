@@ -51,6 +51,7 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
       enabled: true,
       idle: true,
       error: false,
+      question: true,
       debugError: false,
       minSessionSeconds: DEFAULT_MIN_SESSION_SECONDS,
     }
@@ -58,6 +59,7 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
     if (state && typeof state.enabled === "boolean") policy.enabled = state.enabled
     if (state && typeof state.idle === "boolean") policy.idle = state.idle
     if (state && typeof state.error === "boolean") policy.error = state.error
+    if (state && typeof state.question === "boolean") policy.question = state.question
     if (state && typeof state.debugError === "boolean") policy.debugError = state.debugError
     if (state && typeof state.minSessionSeconds === "number" && Number.isFinite(state.minSessionSeconds)) {
       policy.minSessionSeconds = Math.max(0, Math.floor(state.minSessionSeconds))
@@ -109,6 +111,12 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
     return true
   }
 
+  const getProjectName = () =>
+    project?.id || directory?.split("/").filter(Boolean).pop() || "unknown-project"
+
+  const getDirectoryName = () =>
+    (directory || process.cwd()).split("/").filter(Boolean).pop() || "unknown"
+
   const sendTelegram = async (message) => {
     const { token, chatId } = getEnv()
     if (!token || !chatId) {
@@ -144,6 +152,109 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
   }
 
   return {
+    "tool.execute.before": async (input) => {
+      if (input.tool !== "question") return
+
+      const sessionId = input.sessionID || input.sessionId || input.session?.id || "unknown"
+      const eventType = "session.question"
+
+      markSessionStart(sessionId)
+
+      const runtimeState = await loadState()
+      const policy = resolvePolicy(runtimeState)
+
+      if (!policy.enabled) return
+      if (!policy.question) return
+
+      const durationSeconds = getSessionDurationSeconds(sessionId)
+      if (durationSeconds < policy.minSessionSeconds) return
+
+      if (!shouldSend(eventType, sessionId)) return
+
+      const projectName = getProjectName()
+      const cwd = getDirectoryName()
+      const text = [
+        "OpenCode: needs your input",
+        `Project: ${projectName}`,
+        `Session: ${sessionId}`,
+        `Duration: ${durationSeconds}s`,
+        `Directory: ${cwd}`,
+      ].join("\n")
+
+      try {
+        const result = await sendTelegram(text)
+        if (!result.ok) {
+          const lastError = {
+            at: new Date().toISOString(),
+            scope: "event-send",
+            eventType,
+            sessionId,
+            message:
+              result.reason === "http-error"
+                ? "HTTP failure while sending Telegram notification."
+                : "Missing Telegram environment variables.",
+            status: result.status,
+            body: result.body,
+            details: result.details,
+          }
+
+          await saveState({
+            ...(runtimeState || {}),
+            enabled: policy.enabled,
+            idle: policy.idle,
+            error: policy.error,
+            question: policy.question,
+            debugError: policy.debugError,
+            minSessionSeconds: policy.minSessionSeconds,
+            lastError,
+          })
+
+          await client.app.log({
+            body: {
+              service: "telegram-notify-plugin",
+              level: "error",
+              message:
+                result.reason === "http-error"
+                  ? `Failed to send Telegram message (${result.status}).`
+                  : "Telegram variables are missing.",
+              extra: policy.debugError
+                ? { eventType, sessionId, status: result.status, body: result.body, details: result.details }
+                : undefined,
+            },
+          })
+        }
+      } catch (error) {
+        const lastError = {
+          at: new Date().toISOString(),
+          scope: "event-send",
+          eventType,
+          sessionId,
+          message: "Unexpected error while sending Telegram notification.",
+          error: String(error),
+        }
+
+        await saveState({
+          ...(runtimeState || {}),
+          enabled: policy.enabled,
+          idle: policy.idle,
+          error: policy.error,
+          question: policy.question,
+          debugError: policy.debugError,
+          minSessionSeconds: policy.minSessionSeconds,
+          lastError,
+        })
+
+        await client.app.log({
+          body: {
+            service: "telegram-notify-plugin",
+            level: "error",
+            message: "Unexpected error while sending Telegram message.",
+            extra: policy.debugError ? { error: String(error), eventType, sessionId } : undefined,
+          },
+        })
+      }
+    },
+
     event: async ({ event }) => {
       if (!event?.type) return
 
@@ -196,8 +307,8 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
         return
       }
 
-      const projectName = project?.id || directory?.split("/").filter(Boolean).pop() || "unknown-project"
-      const cwd = directory || process.cwd()
+      const projectName = getProjectName()
+      const cwd = getDirectoryName()
       const label = eventType === "session.error" ? "error" : "completed"
       const text = [
         "OpenCode: session finished",
@@ -230,6 +341,7 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
             enabled: policy.enabled,
             idle: policy.idle,
             error: policy.error,
+            question: policy.question,
             debugError: policy.debugError,
             minSessionSeconds: policy.minSessionSeconds,
             lastError,
@@ -270,6 +382,7 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
           enabled: policy.enabled,
           idle: policy.idle,
           error: policy.error,
+          question: policy.question,
           debugError: policy.debugError,
           minSessionSeconds: policy.minSessionSeconds,
           lastError,

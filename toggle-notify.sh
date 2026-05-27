@@ -8,6 +8,7 @@ Usage:
   ./toggle-notify.sh --i <ia> [--project] all on|off
   ./toggle-notify.sh --i <ia> [--project] idle on|off
   ./toggle-notify.sh --i <ia> [--project] error on|off
+  ./toggle-notify.sh --i <ia> [--project] question on|off
   ./toggle-notify.sh --i <ia> [--project] debug on|off
   ./toggle-notify.sh --i <ia> [--project] min <seconds|off>
   ./toggle-notify.sh --i <ia> [--project] test
@@ -20,9 +21,9 @@ Options:
   --help       Show this help
 
 Notes:
-  - all on   => enabled=true, idle=true, error=true
-  - all off  => enabled=false, idle=false, error=false
-  - idle/error on force enabled=true
+  - all on   => enabled=true, idle=true, error=true, question=true
+  - all off  => enabled=false, idle=false, error=false, question=false
+  - idle/error/question on force enabled=true
   - min off  => minSessionSeconds=0
   - debug on => shows/saves detailed error
   - uninstall local removes project plugin/state + .opencode/commands/notify.md
@@ -153,13 +154,14 @@ state = {
     "enabled": True,
     "idle": True,
     "error": False,
+    "question": True,
     "debugError": False,
     "minSessionSeconds": 60,
 }
 if os.path.exists(state_file):
     with open(state_file, "r", encoding="utf-8") as f:
         loaded = json.load(f)
-    for key in ("enabled", "idle", "error", "debugError"):
+    for key in ("enabled", "idle", "error", "question", "debugError"):
         if isinstance(loaded.get(key), bool):
             state[key] = loaded[key]
     if isinstance(loaded.get("minSessionSeconds"), (int, float)):
@@ -212,13 +214,14 @@ state = {
     "enabled": True,
     "idle": True,
     "error": False,
+    "question": True,
     "debugError": False,
     "minSessionSeconds": 60,
 }
 if os.path.exists(state_file):
     with open(state_file, "r", encoding="utf-8") as f:
         loaded = json.load(f)
-    for key in ("enabled", "idle", "error", "debugError"):
+    for key in ("enabled", "idle", "error", "question", "debugError"):
         if isinstance(loaded.get(key), bool):
             state[key] = loaded[key]
     if isinstance(loaded.get("minSessionSeconds"), (int, float)):
@@ -297,7 +300,7 @@ if [[ -z "$TARGET" || -z "$MODE" ]]; then
   exit 1
 fi
 
-if [[ "$TARGET" != "all" && "$TARGET" != "idle" && "$TARGET" != "error" && "$TARGET" != "debug" && "$TARGET" != "min" ]]; then
+if [[ "$TARGET" != "all" && "$TARGET" != "idle" && "$TARGET" != "error" && "$TARGET" != "question" && "$TARGET" != "debug" && "$TARGET" != "min" ]]; then
   echo "Error: invalid target: $TARGET"
   usage
   exit 1
@@ -334,13 +337,14 @@ state = {
     "enabled": True,
     "idle": True,
     "error": False,
+    "question": True,
     "debugError": False,
     "minSessionSeconds": 60,
 }
 if os.path.exists(state_file):
     with open(state_file, "r", encoding="utf-8") as f:
         loaded = json.load(f)
-    for key in ("enabled", "idle", "error", "debugError"):
+    for key in ("enabled", "idle", "error", "question", "debugError"):
         if isinstance(loaded.get(key), bool):
             state[key] = loaded[key]
     if isinstance(loaded.get("minSessionSeconds"), (int, float)):
@@ -350,12 +354,17 @@ if target == "all":
     state["enabled"] = on
     state["idle"] = on
     state["error"] = on
+    state["question"] = on
 elif target == "idle":
     state["idle"] = on
     if on:
         state["enabled"] = True
 elif target == "error":
     state["error"] = on
+    if on:
+        state["enabled"] = True
+elif target == "question":
+    state["question"] = on
     if on:
         state["enabled"] = True
 elif target == "debug":

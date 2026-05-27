@@ -7,6 +7,7 @@ Local plugin to send Telegram notifications when an OpenCode session ends (`sess
 ## What it does
 
 - Sends a message when the session becomes idle (end of execution).
+- Sends a message when the AI asks you a question and waits for input.
 - Lets you configure error notifications (`session.error`) during the session.
 - Lets you define a minimum session duration to avoid short notifications.
 - Avoids duplicate notifications within a short window.
@@ -105,6 +106,7 @@ Default values after install:
 - `enabled: true`
 - `idle: true`
 - `error: false`
+- `question: true`
 - `debugError: false`
 - `minSessionSeconds: 60`
 
@@ -163,6 +165,13 @@ Enable/disable error only:
 ./toggle-notify.sh --i opencode error off
 ```
 
+Enable/disable question only:
+
+```bash
+./toggle-notify.sh --i opencode question on
+./toggle-notify.sh --i opencode question off
+```
+
 The plugin reads `telegram-notify.state.json` on every event, so changes apply to the current session without restarting OpenCode.
 
 ## 6) Use with `/notify` command in OpenCode
@@ -178,6 +187,8 @@ After installation, you can control everything directly in OpenCode chat:
 /notify idle off
 /notify error on
 /notify error off
+/notify question on
+/notify question off
 /notify debug on
 /notify debug off
 /notify min 120
@@ -191,6 +202,7 @@ Shortcuts:
 - `/notify on` is equivalent to `all on`
 - `/notify off` is equivalent to `all off`
 - `/notify min off` disables minimum duration filtering (equivalent to `0`)
+- `/notify question on|off` controls notifications when the AI asks a question
 - `/notify test` sends a test notification immediately
 - `/notify debug on` enables detailed failure logs and saves `lastError`
 - `/notify last-error` shows the latest error saved in state
@@ -244,4 +256,5 @@ Parameters:
 - `all on|off`: enables/disables all notifications.
 - `idle on|off`: enables/disables idle session notification.
 - `error on|off`: enables/disables error notification.
+- `question on|off`: enables/disables question notification.
 - `min <seconds|off>`: sets minimum session duration for notifications.

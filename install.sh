@@ -147,6 +147,7 @@ defaults = {
     "enabled": True,
     "idle": True,
     "error": False,
+    "question": True,
     "debugError": False,
     "minSessionSeconds": 60,
 }
@@ -178,6 +179,7 @@ echo "Scope: $SCOPE"
 echo "Destination: $TARGET_DIR/telegram-notify.plugin.js"
 echo "State file: $STATE_FILE"
 echo "Error notification (default): false"
+echo "Question notification (default): true"
 echo "Error debug (default): false"
 echo "Minimum duration (default): 60s"
 
@@ -205,6 +207,7 @@ Rules:
 - Shortcuts: \`on\` = \`all on\`; \`off\` = \`all off\`.
 - Minimum duration: \`min <seconds>\` or \`min off\`.
 - Send test: \`test\`.
+- Question notify: \`question on\` or \`question off\`.
 - Error debug: \`debug on\` or \`debug off\`.
 - Last error: \`last-error\`.
 EOF
