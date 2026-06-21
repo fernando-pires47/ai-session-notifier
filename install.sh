@@ -173,11 +173,20 @@ PY
 
 rm -f "$TARGET_DIR/telegram-notify.config.json"
 
+VERSION_FILE="$TARGET_DIR/telegram-notify.version"
+if command -v git &>/dev/null && git -C "$SCRIPT_DIR" rev-parse --is-inside-work-tree &>/dev/null 2>&1; then
+  VERSION="$(git -C "$SCRIPT_DIR" describe --tags --always 2>/dev/null || echo "dev")"
+else
+  VERSION="dev"
+fi
+echo "$VERSION" > "$VERSION_FILE"
+
 echo "Plugin installed successfully."
 echo "IA: $IA"
 echo "Scope: $SCOPE"
 echo "Destination: $TARGET_DIR/telegram-notify.plugin.js"
 echo "State file: $STATE_FILE"
+echo "Version: $VERSION"
 echo "Error notification (default): false"
 echo "Question notification (default): true"
 echo "Error debug (default): false"

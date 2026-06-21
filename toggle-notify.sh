@@ -4,6 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
+  ./toggle-notify.sh --i <ia> [--project] version
   ./toggle-notify.sh --i <ia> [--project] status
   ./toggle-notify.sh --i <ia> [--project] all on|off
   ./toggle-notify.sh --i <ia> [--project] idle on|off
@@ -90,6 +91,17 @@ if [[ "$ACTION" == "on" || "$ACTION" == "off" ]]; then
   ACTION="all"
 fi
 
+VERSION_FILE="$TARGET_DIR/telegram-notify.version"
+
+if [[ "$ACTION" == "version" ]]; then
+  if [[ -f "$VERSION_FILE" ]]; then
+    cat "$VERSION_FILE"
+  else
+    echo "dev"
+  fi
+  exit 0
+fi
+
 if [[ "$ACTION" == "uninstall" ]]; then
   UNINSTALL_SCOPE="${2:-}"
 
@@ -117,6 +129,7 @@ if [[ "$ACTION" == "uninstall" ]]; then
 
     remove_file "$local_plugins_dir/telegram-notify.plugin.js"
     remove_file "$local_plugins_dir/telegram-notify.state.json"
+    remove_file "$local_plugins_dir/telegram-notify.version"
     remove_file "$local_plugins_dir/toggle-notify.sh"
     remove_file "$local_commands_dir/notify.md"
   }
@@ -127,6 +140,7 @@ if [[ "$ACTION" == "uninstall" ]]; then
 
     remove_file "$global_plugins_dir/telegram-notify.plugin.js"
     remove_file "$global_plugins_dir/telegram-notify.state.json"
+    remove_file "$global_plugins_dir/telegram-notify.version"
     remove_file "$global_plugins_dir/toggle-notify.sh"
   }
 
@@ -143,6 +157,12 @@ if [[ "$ACTION" == "uninstall" ]]; then
 fi
 
 if [[ "$ACTION" == "status" ]]; then
+  VER="dev"
+  if [[ -f "$VERSION_FILE" ]]; then
+    VER="$(cat "$VERSION_FILE")"
+  fi
+  echo "version: $VER"
+  echo "---"
   python3 - "$STATE_FILE" <<'PY'
 import json
 import os

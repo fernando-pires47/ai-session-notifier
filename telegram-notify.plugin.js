@@ -117,6 +117,75 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
   const getDirectoryName = () =>
     (directory || process.cwd()).split("/").filter(Boolean).pop() || "unknown"
 
+  const getSessionTokenInfo = async (sessionId) => {
+    try {
+      const result = await client.session.messages({ path: { id: sessionId } })
+      if (!result.data || !Array.isArray(result.data)) return null
+
+      let input = 0
+      let output = 0
+      let reasoning = 0
+      let cost = 0
+
+      for (const item of result.data) {
+        if (item.info?.role === "assistant" && item.info.tokens) {
+          input += item.info.tokens.input || 0
+          output += item.info.tokens.output || 0
+          reasoning += item.info.tokens.reasoning || 0
+          if (typeof item.info.cost === "number") {
+            cost += item.info.cost
+          }
+        }
+      }
+
+      if (input === 0 && output === 0 && reasoning === 0) return null
+      return { input, output, reasoning, cost: Math.round(cost * 10000) / 10000 }
+    } catch {
+      return null
+    }
+  }
+
+  const getSessionAgentInfo = async (sessionId) => {
+    try {
+      const result = await client.session.messages({ path: { id: sessionId } })
+      if (!result.data || !Array.isArray(result.data)) return null
+
+      let agentName = null
+      for (const item of result.data) {
+        if (item.info?.role === "user" && item.info.agent) {
+          agentName = item.info.agent
+          break
+        }
+      }
+
+      if (!agentName) return null
+
+      const agentsResult = await client.app.agents()
+      const agents = agentsResult.data
+      if (!agents || !Array.isArray(agents)) return { name: agentName, mode: "unknown" }
+
+      const agent = agents.find((a) => a.name === agentName)
+      return { name: agentName, mode: agent?.mode || "unknown" }
+    } catch {
+      return null
+    }
+  }
+
+  const formatTokens = ({ input, output, reasoning, cost }) => {
+    const fmt = (n) => {
+      if (n < 1000) return String(n)
+      if (n < 1000000) return `${(n / 1000).toFixed(1)}k`
+      return `${(n / 1000000).toFixed(1)}M`
+    }
+
+    const parts = []
+    if (input > 0) parts.push(`${fmt(input)} in`)
+    if (output > 0) parts.push(`${fmt(output)} out`)
+    if (reasoning > 0) parts.push(`${fmt(reasoning)} reasoning`)
+    parts.push(`$${cost.toFixed(2)}`)
+    return parts.join(" / ")
+  }
+
   const sendTelegram = async (message) => {
     const { token, chatId } = getEnv()
     if (!token || !chatId) {
@@ -310,14 +379,26 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
       const projectName = getProjectName()
       const cwd = getDirectoryName()
       const label = eventType === "session.error" ? "error" : "completed"
-      const text = [
+      const lines = [
         "OpenCode: session finished",
         `Project: ${projectName}`,
         `Status: ${label}`,
         `Session: ${sessionId}`,
         `Duration: ${durationSeconds}s`,
         `Directory: ${cwd}`,
-      ].join("\n")
+      ]
+
+      const tokenInfo = await getSessionTokenInfo(sessionId)
+      const agentInfo = await getSessionAgentInfo(sessionId)
+
+      if (agentInfo) {
+        lines.push(`Agent: ${agentInfo.name} (${agentInfo.mode})`)
+      }
+      if (tokenInfo) {
+        lines.push(`Tokens: ${formatTokens(tokenInfo)}`)
+      }
+
+      const text = lines.join("\n")
 
       try {
         const result = await sendTelegram(text)
