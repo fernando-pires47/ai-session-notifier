@@ -122,21 +122,13 @@ export const TelegramNotifyPlugin = async ({ project, directory, client }) => {
       const result = await client.session.messages({ path: { id: sessionId } })
       if (!result.data || !Array.isArray(result.data)) return null
 
-      let input = 0
-      let output = 0
-      let reasoning = 0
-      let cost = 0
+      const lastAssistant = [...result.data].reverse().find(
+        (item) => item.info?.role === "assistant" && item.info.tokens
+      )
+      if (!lastAssistant) return null
 
-      for (const item of result.data) {
-        if (item.info?.role === "assistant" && item.info.tokens) {
-          input += item.info.tokens.input || 0
-          output += item.info.tokens.output || 0
-          reasoning += item.info.tokens.reasoning || 0
-          if (typeof item.info.cost === "number") {
-            cost += item.info.cost
-          }
-        }
-      }
+      const { input, output, reasoning } = lastAssistant.info.tokens
+      const cost = typeof lastAssistant.info.cost === "number" ? lastAssistant.info.cost : 0
 
       if (input === 0 && output === 0 && reasoning === 0) return null
       return { input, output, reasoning, cost: Math.round(cost * 10000) / 10000 }
